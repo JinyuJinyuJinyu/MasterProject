@@ -162,15 +162,16 @@ def main():
 
     test_summary_writer = tf.summary.create_file_writer('./logs/test')
 
-    for epoch in range(1,300):
+    for epoch in range(1,301):
         # train
-        print('training')
+        print('training epoch: ',epoch)
         for step, (x_batch, y_batch) in enumerate(train_set):
             loss_value = train_step(x_batch, y_batch)
 
          # test each 5 epochs
-        print('validating')
+
         if epoch % 5 == 0:
+            print('validating')
             crt = lossess = 0
             with test_summary_writer.as_default():
                 tf.summary.trace_on(graph=True, profiler=True)
@@ -181,7 +182,7 @@ def main():
                     crt += correct.numpy()
                     lossess += loss.numpy()
 
-                print(val_acc_metric.result())
+                print('epoch: ',epoch, 'accu: ',val_acc_metric.result())
 
                 val_acc_metric.reset_states()
 
