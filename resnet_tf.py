@@ -170,7 +170,8 @@ def main():
 
          # test each 5 epochs
 
-        if epoch % 5 == 0:
+        # if epoch % 5 == 0:
+        if True:
             print('validating')
             crt = lossess = 0
             with test_summary_writer.as_default():
