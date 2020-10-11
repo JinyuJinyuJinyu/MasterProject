@@ -164,10 +164,12 @@ def main():
 
     for epoch in range(1,3):
         # train
+        print('training')
         for step, (x_batch, y_batch) in enumerate(train_set):
             loss_value = train_step(x_batch, y_batch)
 
          # test each 5 epochs
+        print('validating')
         if epoch % 5 == 0:
             crt = lossess = 0
             with test_summary_writer.as_default():
