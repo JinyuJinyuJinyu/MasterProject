@@ -145,8 +145,8 @@ def main():
 
         val_logits = resnet18(x_batch_val, training=False)
 
-        y_onehot = tf.one_hot(y_batch, depth=10)
-        loss = tf.keras.losses.categorical_crossentropy(y_onehot, val_logits, from_logits=True)
+        y_onehot_val = tf.one_hot(y_batch_val, depth=10)
+        loss = tf.keras.losses.categorical_crossentropy(y_onehot_val, val_logits, from_logits=True)
         loss = tf.reduce_sum(loss)
 
         prob = tf.nn.softmax(val_logits,axis=1)
