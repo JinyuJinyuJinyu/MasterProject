@@ -162,7 +162,7 @@ def main():
 
     test_summary_writer = tf.summary.create_file_writer('./logs/test')
 
-    for epoch in range(1,3):
+    for epoch in range(1,300):
         # train
         print('training')
         for step, (x_batch, y_batch) in enumerate(train_set):
