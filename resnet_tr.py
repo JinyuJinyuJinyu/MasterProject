@@ -81,3 +81,7 @@ class Resnet_s(nn.Module):
 
         return x
 
+
+
+model = Resnet_s(Identity, [2, 2, 2, 2])
+print(model)
