@@ -2,6 +2,7 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 import numpy as np
 
+
 class Identity(tf.keras.layers.Layer):
 
     def __init__(self,filters,kernel_size=(3,3), stride=1):
@@ -78,13 +79,6 @@ class Resnet_s(tf.keras.models.Model):
 
         return res_blk
 
-
-
-# model = Resnet_s([3,4,6,3])
-# model.build(input_shape=(None, 32, 32, 3))
-# model.summary()
-
-
 def preprocess(x_batch,y_batch):
     x_batch = tf.cast(x_batch, dtype=tf.float32) /255. - 0.5
     y_batch = tf.cast(y_batch, dtype=tf.int32)
@@ -120,7 +114,6 @@ val_acc_metric = tf.keras.metrics.CategoricalAccuracy()
 
 
 
-
 def main():
 
     # tf.random.set_random_seed(2345)
@@ -140,7 +133,7 @@ def main():
             optimizer.apply_gradients(zip(grads, resnet18.trainable_variables))
         return loss_value
 
-    @tf.function
+
     def val_step(x_batch_val, y_batch_val):
 
         val_logits = resnet18(x_batch_val, training=False)
@@ -150,14 +143,16 @@ def main():
         loss = tf.reduce_sum(loss)
 
         prob = tf.nn.softmax(val_logits,axis=1)
-        preds = tf.argmax(prob,axis=1)
-        preds = tf.cast(preds,dtype=tf.int32)
-        corrects = tf.cast(tf.equal(preds,y_batch_val),dtype=tf.int32)
+        preds = tf.argmax(prob, axis=1)
+        preds = tf.cast(preds, dtype=tf.int32)
+        corrects = tf.cast(tf.equal(preds, y_batch_val), dtype=tf.int32)
         corrects = tf.reduce_sum(corrects)
 
         val_acc_metric.update_state(y_batch_val, val_logits)
 
-        return corrects, loss
+        mtx = tf.math.confusion_matrix(y_batch_val, preds, num_classes=10)
+        print(np.array(mtx))
+        return corrects, loss, mtx
 
 
     test_summary_writer = tf.summary.create_file_writer('./logs/test')
@@ -174,11 +169,23 @@ def main():
         if True:
             print('validating')
             crt = lossess = 0
+
+            # for x_batch_val, y_batch_val in val_set:
+            #     correct, loss,confusion_mtx = val_step(x_batch_val, y_batch_val)
+            #
+            #     crt += correct.numpy()
+            #     lossess += loss.numpy()
+            #
+            # print('epoch: ', epoch, 'accu: ', val_acc_metric.result())
+            #
+            # val_acc_metric.reset_states()
+
+
             with test_summary_writer.as_default():
                 tf.summary.trace_on(graph=True, profiler=True)
 
                 for x_batch_val, y_batch_val in val_set:
-                    correct,loss = val_step(x_batch_val, y_batch_val)
+                    correct,loss,confusion_mtx = val_step(x_batch_val, y_batch_val)
 
                     crt += correct.numpy()
                     lossess += loss.numpy()
