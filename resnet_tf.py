@@ -149,9 +149,6 @@ def main():
         prob = tf.nn.softmax(val_logits,axis=1)
         preds = tf.argmax(prob, axis=1)
         preds = tf.cast(preds, dtype=tf.int32)
-        # corrects = tf.cast(tf.equal(preds, y_batch_val), dtype=tf.int32)
-        # corrects = tf.reduce_sum(corrects)
-
 
         mtx = tf.math.confusion_matrix(y_batch_val, preds, num_classes=10)
 
@@ -189,11 +186,10 @@ def main():
             outfile.append(val_info)
             val_time += (time.time() - val_start_time)
 
-            # tf.summary.scalar('test loss', lossess / 10000, step=epoch)
-            # tf.summary.scalar('test acc', (crt / 10000) * 100, step=epoch)
-            # tf.summary.trace_export(name="Test", step=epoch, profiler_outdir='./logs/test/trace')
     ttl_time = {}
     ttl_time['training time'] = (time.time() - start_time - val_time)
+    ttl_time['total time'] = (time.time() - start_time)
+    ttl_time['val time'] = val_time
     outfile.append(ttl_time)
     json.dump(outfile, f, separators=(',', ':'), indent=4)
     f.close()
