@@ -109,8 +109,6 @@ val_set = val_set.map(preprocess).batch(batch_size)
 # val_set = val_set.map(preprocess).batch(batch_size)
 
 
-train_acc_metric = tf.keras.metrics.CategoricalAccuracy()
-val_acc_metric = tf.keras.metrics.CategoricalAccuracy()
 
 
 
@@ -151,56 +149,49 @@ def main():
         prob = tf.nn.softmax(val_logits,axis=1)
         preds = tf.argmax(prob, axis=1)
         preds = tf.cast(preds, dtype=tf.int32)
-        corrects = tf.cast(tf.equal(preds, y_batch_val), dtype=tf.int32)
-        corrects = tf.reduce_sum(corrects)
+        # corrects = tf.cast(tf.equal(preds, y_batch_val), dtype=tf.int32)
+        # corrects = tf.reduce_sum(corrects)
 
-        val_acc_metric.update_state(y_batch_val, val_logits)
 
         mtx = tf.math.confusion_matrix(y_batch_val, preds, num_classes=10)
+
         # print(np.array(mtx))
-        return corrects, loss, mtx
+        return loss, mtx
 
 
-    test_summary_writer = tf.summary.create_file_writer('./logs/test')
     val_time = 0
     start_time = time.time()
     for epoch in range(1,301):
         # train
         # print('training epoch: ',epoch)
         for step, (x_batch, y_batch) in enumerate(train_set):
-            loss_value = train_step(x_batch, y_batch)
-         # test each 5 epochs
+            train_step(x_batch, y_batch)
+
 
         # if epoch % 5 == 0:
         if epoch % 5 == 0:
             val_start_time = time.time()
             val_info = {}
             # print('validating')
-            crt = lossess = 0
+            lossess = 0
             confusion_matrix = np.zeros((10,10))
-            with test_summary_writer.as_default():
-                tf.summary.trace_on(graph=True, profiler=True)
 
-                for x_batch_val, y_batch_val in val_set:
-                    correct,loss,confusion_mtx = val_step(x_batch_val, y_batch_val)
+            for x_batch_val, y_batch_val in val_set:
+                loss, confusion_mtx = val_step(x_batch_val, y_batch_val)
 
-                    confusion_matrix = np.add(confusion_matrix,confusion_mtx)
-                    crt += correct.numpy()
-                    lossess += loss.numpy()
+                confusion_matrix = np.add(confusion_matrix, confusion_mtx)
+                lossess += loss.numpy()
 
-
-                # print('epoch: ',epoch, 'accu: ',val_acc_metric.result())
-
-                val_acc_metric.reset_states()
             val_info['epoch: '] = epoch
             val_info['test loss'] = lossess / 10000
-            val_info['test acc'] = (crt / 10000) * 100
+            val_info['test acc'] = (tf.linalg.trace(confusion_matrix) / 10000) * 100
             val_info['confusion matrix'] = confusion_matrix.tolist()
             outfile.append(val_info)
             val_time += (time.time() - val_start_time)
-            tf.summary.scalar('test loss', lossess / 10000, step=epoch)
-            tf.summary.scalar('test acc', (crt / 10000) * 100, step=epoch)
-            tf.summary.trace_export(name="Test", step=epoch, profiler_outdir='./logs/test/trace')
+
+            # tf.summary.scalar('test loss', lossess / 10000, step=epoch)
+            # tf.summary.scalar('test acc', (crt / 10000) * 100, step=epoch)
+            # tf.summary.trace_export(name="Test", step=epoch, profiler_outdir='./logs/test/trace')
     ttl_time = {}
     ttl_time['training time'] = (time.time() - start_time - val_time)
     outfile.append(ttl_time)
