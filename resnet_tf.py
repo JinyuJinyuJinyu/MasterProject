@@ -1,6 +1,7 @@
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 import numpy as np
+import json
 
 
 class Identity(tf.keras.layers.Layer):
@@ -123,6 +124,10 @@ def main():
     # resnet34 = Resnet_s([3,4,6,3])
     optimizer = tf.keras.optimizers.Adam(lr=1e-3)
 
+    f = open('test.json', "w", encoding='utf-8')
+    outfile = []
+
+
     @tf.function
     def train_step(x_batch, y_batch):
         with tf.GradientTape() as tape:
@@ -151,7 +156,7 @@ def main():
         val_acc_metric.update_state(y_batch_val, val_logits)
 
         mtx = tf.math.confusion_matrix(y_batch_val, preds, num_classes=10)
-        print(np.array(mtx))
+        # print(np.array(mtx))
         return corrects, loss, mtx
 
 
@@ -166,37 +171,36 @@ def main():
          # test each 5 epochs
 
         # if epoch % 5 == 0:
-        if True:
+        if epoch % 5 == 0:
+            val_info = {}
             print('validating')
             crt = lossess = 0
-
-            # for x_batch_val, y_batch_val in val_set:
-            #     correct, loss,confusion_mtx = val_step(x_batch_val, y_batch_val)
-            #
-            #     crt += correct.numpy()
-            #     lossess += loss.numpy()
-            #
-            # print('epoch: ', epoch, 'accu: ', val_acc_metric.result())
-            #
-            # val_acc_metric.reset_states()
-
-
+            confusion_matrix = np.zeros((10,10))
             with test_summary_writer.as_default():
                 tf.summary.trace_on(graph=True, profiler=True)
 
                 for x_batch_val, y_batch_val in val_set:
                     correct,loss,confusion_mtx = val_step(x_batch_val, y_batch_val)
 
+                    confusion_matrix = np.add(confusion_matrix,confusion_mtx)
                     crt += correct.numpy()
                     lossess += loss.numpy()
+
 
                 print('epoch: ',epoch, 'accu: ',val_acc_metric.result())
 
                 val_acc_metric.reset_states()
+            val_info['epoch: '] = epoch
+            val_info['test loss'] = lossess / 10000
+            val_info['test acc'] = (crt / 10000) * 100
+            val_info['confusion matrix'] = confusion_matrix.tolist()
+            outfile.append(val_info)
 
             tf.summary.scalar('test loss', lossess / 10000, step=epoch)
             tf.summary.scalar('test acc', (crt / 10000) * 100, step=epoch)
             tf.summary.trace_export(name="Test", step=epoch, profiler_outdir='./logs/test/trace')
+    json.dump(outfile, f, separators=(',', ':'), indent=4)
+    f.close()
 
 if __name__ == '__main__':
     main()
