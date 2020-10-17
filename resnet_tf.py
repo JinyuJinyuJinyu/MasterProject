@@ -2,6 +2,7 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 import numpy as np
 import json
+import time
 
 
 class Identity(tf.keras.layers.Layer):
@@ -161,19 +162,20 @@ def main():
 
 
     test_summary_writer = tf.summary.create_file_writer('./logs/test')
-
+    val_time = 0
+    start_time = time.time()
     for epoch in range(1,301):
         # train
-        print('training epoch: ',epoch)
+        # print('training epoch: ',epoch)
         for step, (x_batch, y_batch) in enumerate(train_set):
             loss_value = train_step(x_batch, y_batch)
-
          # test each 5 epochs
 
         # if epoch % 5 == 0:
         if epoch % 5 == 0:
+            val_start_time = time.time()
             val_info = {}
-            print('validating')
+            # print('validating')
             crt = lossess = 0
             confusion_matrix = np.zeros((10,10))
             with test_summary_writer.as_default():
@@ -187,7 +189,7 @@ def main():
                     lossess += loss.numpy()
 
 
-                print('epoch: ',epoch, 'accu: ',val_acc_metric.result())
+                # print('epoch: ',epoch, 'accu: ',val_acc_metric.result())
 
                 val_acc_metric.reset_states()
             val_info['epoch: '] = epoch
@@ -195,10 +197,13 @@ def main():
             val_info['test acc'] = (crt / 10000) * 100
             val_info['confusion matrix'] = confusion_matrix.tolist()
             outfile.append(val_info)
-
+            val_time += (time.time() - val_start_time)
             tf.summary.scalar('test loss', lossess / 10000, step=epoch)
             tf.summary.scalar('test acc', (crt / 10000) * 100, step=epoch)
             tf.summary.trace_export(name="Test", step=epoch, profiler_outdir='./logs/test/trace')
+    ttl_time = {}
+    ttl_time['training time'] = (time.time() - start_time - val_time)
+    outfile.append(ttl_time)
     json.dump(outfile, f, separators=(',', ':'), indent=4)
     f.close()
 
