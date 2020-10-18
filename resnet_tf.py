@@ -98,16 +98,11 @@ _,x_val,_,y_val = train_test_split(x_test,y_test,test_size=0.2,shuffle=True)
 y_val = tf.squeeze(y_val, axis=1)
 
 
-# print(x_val,y_val.shape)
 train_set = tf.data.Dataset.from_tensor_slices((x_train,y_train))
 train_set = train_set.shuffle(1024).map(preprocess).batch(batch_size)
 
 val_set = tf.data.Dataset.from_tensor_slices((x_test,y_test))
 val_set = val_set.map(preprocess).batch(batch_size)
-
-# val_set = tf.data.Dataset.from_tensor_slices((x_val,y_val))
-# val_set = val_set.map(preprocess).batch(batch_size)
-
 
 
 
@@ -116,14 +111,12 @@ val_set = val_set.map(preprocess).batch(batch_size)
 
 def main():
 
-    # tf.random.set_random_seed(2345)
     resnet18 = Resnet_s([2,2,2,2])
     resnet18.build(input_shape=(None,32,32,3))
-    # resnet18.summary()
     # resnet34 = Resnet_s([3,4,6,3])
     optimizer = tf.keras.optimizers.Adam(lr=1e-3)
     # optimizer = tf.compat.v1.train.GradientDescentOptimizer(lr=1e-3,name='GradientDescent')
-    # optimizer = tf.compat.v1.train.MomentumOptimizer(lr=1e-3, momentum, use_locking=False, name='Momentum', use_nesterov=False)
+    # optimizer = tf.compat.v1.train.MomentumOptimizer(lr=1e-3, momentum=0.9, use_locking=False, name='Momentum', use_nesterov=False)
 
     f = open('test.json', "w", encoding='utf-8')
     outfile = []
@@ -160,15 +153,14 @@ def main():
 
     val_time = 0
     start_time = time.time()
-    for epoch in range(1,301):
+    for epoch in range(1,201):
         # train
         print('training epoch: ',epoch)
         for step, (x_batch, y_batch) in enumerate(train_set):
             train_step(x_batch, y_batch)
 
 
-        # if epoch % 5 == 0:
-        if epoch % 5 == 0:
+        if epoch % 4 == 0:
             val_start_time = time.time()
             val_info = {}
             print('validating')
