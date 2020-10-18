@@ -114,8 +114,8 @@ def main():
     resnet18 = Resnet_s([2,2,2,2])
     resnet18.build(input_shape=(None,32,32,3))
     # resnet34 = Resnet_s([3,4,6,3])
-    optimizer = tf.keras.optimizers.Adam(lr=1e-3)
-    # optimizer = tf.compat.v1.train.GradientDescentOptimizer(lr=1e-3,name='GradientDescent')
+    # optimizer = tf.keras.optimizers.Adam(lr=1e-3)
+    optimizer = tf.compat.v1.train.GradientDescentOptimizer(1e-3,name='GradientDescent')
     # optimizer = tf.compat.v1.train.MomentumOptimizer(lr=1e-3, momentum=0.9, use_locking=False, name='Momentum', use_nesterov=False)
 
     f = open('test.json', "w", encoding='utf-8')
@@ -159,7 +159,6 @@ def main():
         for step, (x_batch, y_batch) in enumerate(train_set):
             train_step(x_batch, y_batch)
 
-
         if epoch % 4 == 0:
             val_start_time = time.time()
             val_info = {}
@@ -175,7 +174,7 @@ def main():
 
             val_info['epoch: '] = epoch
             val_info['test loss'] = lossess / 10000
-            val_info['test acc'] = (tf.linalg.trace(confusion_matrix) / 10000) * 100
+            val_info['test acc'] = (tf.linalg.trace(confusion_matrix).numpy() / 10000) * 100
             val_info['confusion matrix'] = confusion_matrix.tolist()
             outfile.append(val_info)
             val_time += (time.time() - val_start_time)
