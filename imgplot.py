@@ -4,7 +4,7 @@ import json
 
 #airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck
 
-f = open('test.json','r',encoding='utf-8')
+f = open('history.json','r',encoding='utf-8')
 data = json.load(f)
 
 classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
@@ -151,17 +151,16 @@ def vis_confusion(confusion):
     plt.tight_layout()
     plt.show()
 
-accu = []
-for epoch in data:
-    if 'test acc' in epoch:
-        accu.append(epoch["test acc"])
 
+def vis_accu(data):
+    accu = []
+    for epoch in data:
+        if 'test acc' in epoch:
+            accu.append(epoch["test acc"])
 
-plt.plot(accu)
-plt.show()
-
-def vis_accu(accu):
-    plt.plot(accu)
+    plt.plot(np.linspace(1, 301, num=60), accu)
+    plt.xlabel("epoch")
+    plt.ylabel("accuracy")
     plt.show()
 
 
