@@ -5,7 +5,12 @@ import torch.optim as optim
 
 import torchvision
 import torchvision.transforms as transforms
+import pytorch_lightning as pl
 
+
+import numpy as np
+from sklearn.metrics import confusion_matrix
+import time
 import json
 
 
@@ -95,10 +100,6 @@ class Resnet_s(nn.Module):
 
 
 
-# model = Resnet_s(Identity, [2, 2, 2, 2])
-# print(model)
-
-
 transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
@@ -118,24 +119,24 @@ classes = ('airplane', 'automobile', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 
-# Hyper parameters
-num_epochs = 2
-num_classes = 10
-batch_size = 64
-learning_rate = 1e-3
-
 
 def main():
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    outfile = []
+    f = open('adam_tr.json',"w", encoding='utf-8')
 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(device)
     model = Resnet_s(Identity, [2, 2, 2, 2]).to(device)
-    print(model)
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    # optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.Adam(model.parameters())
     criterion = nn.CrossEntropyLoss()
 
+    val_time = 0
+    start_time = time.time()
     for epoch in range(1,2):
-        running_loss = 0.0
+
+        model.train(True)
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data[0].to(device),data[1].to(device)
@@ -149,13 +150,44 @@ def main():
             loss.backward()
             optimizer.step()
 
-            # print statistics
-            running_loss += loss.item()
-            if i % 2000 == 1999:  # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
 
+        if epoch % 4 == 0:
+            
+            val_start_time = time.time()
+            val_info = {}
+            losses = 0
+            corrects = 0
+            model.train(False)
+            with torch.no_grad():
+                for i, data in enumerate(testloader, 0):
+                    inputs, labels = data[0].to(device), data[1].to(device)
+
+                    outputs = model(inputs)
+
+                    loss = criterion(outputs, labels)
+                    prob = F.softmax(outputs, dim=1)
+                    preds = torch.argmax(prob, dim=1)
+
+                    cm = confusion_matrix(labels,preds)
+
+                    corrects += np.trace(cm)
+                    losses += loss
+
+
+            val_info['epoch'] = epoch
+            val_info['test loss'] = losses
+            val_info['test accu'] = corrects/100
+            val_info['confusion matrix'] = cm.tolist()
+            outfile.append(val_info)
+            val_time += time.time() - val_start_time
+
+    ttl_time = {}
+    ttl_time['training time'] = (time.time() - start_time - val_time)
+    ttl_time['total time'] = (time.time() - start_time)
+    ttl_time['val time'] = val_time
+    outfile.append(ttl_time)
+    json.dump(outfile, f, separators=(',', ':'), indent=4)
+    f.close()
 
 if __name__ == '__main__':
     main()
