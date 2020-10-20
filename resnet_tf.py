@@ -76,7 +76,7 @@ class Resnet_s(tf.keras.models.Model):
         res_blk = tf.keras.Sequential()
         res_blk.add(Identity(filter_num, stride=stride))
 
-        for _ in range(1,blocks):
+        for _ in range(0,blocks):
             res_blk.add(Identity(filter_num,stride=stride))
 
         return res_blk
