@@ -152,7 +152,7 @@ def main():
 
 
         if epoch % 4 == 0:
-            
+
             val_start_time = time.time()
             val_info = {}
             losses = 0
