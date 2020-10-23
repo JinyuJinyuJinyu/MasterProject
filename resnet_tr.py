@@ -156,7 +156,7 @@ def main():
 
 
         if epoch % 4 == 0:
-            
+
             val_start_time = time.time()
             print('validating','epoch: ',epoch)
             confusion_mtx = torch.zeros((10,10)).cuda()
