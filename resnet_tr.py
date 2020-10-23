@@ -68,8 +68,6 @@ class Resnet_s(nn.Module):
 
     def _make_layer(self,block,planes,blocks,stride=1):
 
-        # layers = []
-
         strides = [stride] + [1] * (blocks - 1)  # strides=[1,1]
         layers = []
         for stride in strides:
@@ -150,10 +148,6 @@ def main():
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-
-
-
-
 
         if epoch % 4 == 0:
 
