@@ -76,7 +76,7 @@ class Resnet_s(tf.keras.models.Model):
         res_blk = tf.keras.Sequential()
         res_blk.add(Identity(filter_num, stride=stride))
 
-        for _ in range(0,blocks):
+        for _ in range(1,blocks):
             res_blk.add(Identity(filter_num,stride=stride))
 
         return res_blk
@@ -118,7 +118,7 @@ def main():
     optimizer = tf.compat.v1.train.GradientDescentOptimizer(1e-3,name='GradientDescent')
     # optimizer = tf.compat.v1.train.MomentumOptimizer(lr=1e-3, momentum=0.9, use_locking=False, name='Momentum', use_nesterov=False)
 
-    f = open('test.json', "w", encoding='utf-8')
+    f = open('gradient_descent_tf.json', "w", encoding='utf-8')
     outfile = []
 
 
@@ -152,17 +152,18 @@ def main():
 
 
     val_time = 0
+    print('start training TensorFlow')
     start_time = time.time()
     for epoch in range(1,201):
         # train
-        print('training epoch: ',epoch)
+        # print('training epoch: ',epoch)
         for step, (x_batch, y_batch) in enumerate(train_set):
             train_step(x_batch, y_batch)
 
         if epoch % 4 == 0:
             val_start_time = time.time()
             val_info = {}
-            print('validating')
+            # print('validating')
             lossess = 0
             confusion_matrix = np.zeros((10,10))
 

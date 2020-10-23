@@ -7,7 +7,7 @@ import torchvision
 import torchvision.transforms as transforms
 import pytorch_lightning as pl
 
-
+import torch_utils
 import numpy as np
 from sklearn.metrics import confusion_matrix
 import time
@@ -68,7 +68,7 @@ class Resnet_s(nn.Module):
 
     def _make_layer(self,block,planes,blocks,stride=1):
 
-        layers = []
+        # layers = []
 
         strides = [stride] + [1] * (blocks - 1)  # strides=[1,1]
         layers = []
@@ -123,18 +123,19 @@ classes = ('airplane', 'automobile', 'bird', 'cat',
 def main():
 
     outfile = []
-    f = open('adam_tr.json',"w", encoding='utf-8')
+    f = open('SGD_tr.json',"w", encoding='utf-8')
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(device)
+    # print(device)
     model = Resnet_s(Identity, [2, 2, 2, 2]).to(device)
-    # optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    # optimizer = optim.Adam(model.parameters())
     criterion = nn.CrossEntropyLoss()
 
     val_time = 0
+    print('start training Pytorch')
     start_time = time.time()
-    for epoch in range(1,2):
+    for epoch in range(1,201):
 
         model.train(True)
         for i, data in enumerate(trainloader, 0):
@@ -151,33 +152,37 @@ def main():
             optimizer.step()
 
 
+
+
+
         if epoch % 4 == 0:
             
             val_start_time = time.time()
+            print('validating','epoch: ',epoch)
+            confusion_mtx = torch.zeros((10,10)).cuda()
             val_info = {}
             losses = 0
-            corrects = 0
             model.train(False)
             with torch.no_grad():
                 for i, data in enumerate(testloader, 0):
                     inputs, labels = data[0].to(device), data[1].to(device)
-
                     outputs = model(inputs)
 
                     loss = criterion(outputs, labels)
                     prob = F.softmax(outputs, dim=1)
                     preds = torch.argmax(prob, dim=1)
 
-                    cm = confusion_matrix(labels,preds)
+                    # cm = confusion_matrix(labels.numpy(),preds.numpy())
+                    cm = torch_utils.confusion_matrix(preds,labels,num_classes=10)
+                    confusion_mtx = torch.add(confusion_mtx,cm)
 
-                    corrects += np.trace(cm)
+                    # corrects += np.trace(cm)
                     losses += loss
 
-
             val_info['epoch'] = epoch
-            val_info['test loss'] = losses
-            val_info['test accu'] = corrects/100
-            val_info['confusion matrix'] = cm.tolist()
+            val_info['test loss'] = losses.cpu().numpy().tolist()
+            val_info['test accu'] = torch.trace(confusion_mtx).cpu().numpy()/100
+            val_info['confusion matrix'] = confusion_mtx.tolist()
             outfile.append(val_info)
             val_time += time.time() - val_start_time
 
