@@ -5,11 +5,9 @@ import torch.optim as optim
 
 import torchvision
 import torchvision.transforms as transforms
-import pytorch_lightning as pl
 
 import torch_utils
-import numpy as np
-from sklearn.metrics import confusion_matrix
+
 import time
 import json
 
