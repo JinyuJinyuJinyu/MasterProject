@@ -4,7 +4,8 @@ import numpy as np
 import json
 import time
 
-
+tf.keras.backend.set_floatx('float32')
+tf.random.set_seed(0)
 class Identity(tf.keras.layers.Layer):
 
     def __init__(self,filters,kernel_size=(3,3), stride=1):
@@ -105,20 +106,21 @@ val_set = tf.data.Dataset.from_tensor_slices((x_test,y_test))
 val_set = val_set.map(preprocess).batch(batch_size)
 
 
+optis = [tf.keras.optimizers.Adam(lr=1e-3)]
+f_name = ['testtest.json']
 
 
 
-
-def main():
+def main(optimizer,fname):
 
     resnet18 = Resnet_s([2,2,2,2])
     resnet18.build(input_shape=(None,32,32,3))
     # resnet34 = Resnet_s([3,4,6,3])
-    # optimizer = tf.keras.optimizers.Adam(lr=1e-3)
-    optimizer = tf.compat.v1.train.GradientDescentOptimizer(1e-3,name='GradientDescent')
-    # optimizer = tf.compat.v1.train.MomentumOptimizer(lr=1e-3, momentum=0.9, use_locking=False, name='Momentum', use_nesterov=False)
+    optimizer = tf.keras.optimizers.Adam(lr=1e-3)
+    # optimizer = tf.compat.v1.train.GradientDescentOptimizer(1e-3,name='GradientDescent')
+    # optimizer = tf.compat.v1.train.MomentumOptimizer(1e-3, momentum=0.9, use_locking=False, name='Momentum', use_nesterov=False)
 
-    f = open('gradient_descent_tf.json', "w", encoding='utf-8')
+    f = open(fname, "w", encoding='utf-8')
     outfile = []
 
 
@@ -126,6 +128,7 @@ def main():
     def train_step(x_batch, y_batch):
         with tf.GradientTape() as tape:
             logits = resnet18(x_batch, training=True)
+            # default dtype float32
             y_onehot = tf.one_hot(y_batch, depth=10)
             loss_value = tf.keras.losses.categorical_crossentropy(y_onehot, logits, from_logits=True)
             grads = tape.gradient(loss_value, resnet18.trainable_variables)
@@ -136,15 +139,14 @@ def main():
     def val_step(x_batch_val, y_batch_val):
 
         val_logits = resnet18(x_batch_val, training=False)
-
         y_onehot_val = tf.one_hot(y_batch_val, depth=10)
         loss = tf.keras.losses.categorical_crossentropy(y_onehot_val, val_logits, from_logits=True)
         loss = tf.reduce_sum(loss)
 
         prob = tf.nn.softmax(val_logits,axis=1)
+
         preds = tf.argmax(prob, axis=1)
         preds = tf.cast(preds, dtype=tf.int32)
-
         mtx = tf.math.confusion_matrix(y_batch_val, preds, num_classes=10)
 
         # print(np.array(mtx))
@@ -154,13 +156,17 @@ def main():
     val_time = 0
     print('start training TensorFlow')
     start_time = time.time()
-    for epoch in range(1,201):
+    for epoch in range(1,101):
+        print('epoch: ', epoch)
         # train
         # print('training epoch: ',epoch)
         for step, (x_batch, y_batch) in enumerate(train_set):
             train_step(x_batch, y_batch)
+            # for x_batch_val, y_batch_val in val_set:
+            #     loss, confusion_mtx = val_step(x_batch_val, y_batch_val)
+            #     exit()
 
-        if epoch % 4 == 0:
+        if True:
             val_start_time = time.time()
             val_info = {}
             # print('validating')
@@ -189,4 +195,5 @@ def main():
     f.close()
 
 if __name__ == '__main__':
-    main()
+    for opti, f in zip(optis, f_name):
+        main(opti, f)

@@ -1,28 +1,65 @@
-import numpy as np
-import pickle
 import os
-import tensorflow as tf
+import numpy as np
+from sklearn.model_selection import train_test_split
+from tqdm import tqdm
+import cv2
+import time
 
-def load_batch(path,label_key='labels'):
-    with open(path,'rb') as f:
-        d = pickle.load(f)
-        d_dcoded = {}
-        for k,v in d.items():
-            d_dcoded[k.decode('utf8')] = v
-        d = d_dcoded
-    data = d['data']
-    labels = d[label_key]
-    data = data.reshape(data.shape[0],3,32,32)
+image_size = (170,170)
+img_path = 'imageNet_val/ILSVRC2010_images_val/val'
+test_path = 'test_imgs/'
 
-    return data,labels
+
+num_train_samples = 42500
+num_val_samples = 7500
+
+def resize_images(img_n):
+    img_ = os.path.join(img_path,img_n)
+    img = cv2.imread(img_)
+    img = cv2.resize(img, image_size)
+    cv2.imwrite(os.path.join(img_path , img_n),img)
+
 def load_dat():
-    path = 'cifar-10-batches-py'
-    train_samples = 50000
+    pbar = tqdm(total=50000)
 
 
-    x_train = np.empty((train_samples,3,32,32),dtype='unit8')
-    y_train = np.empty((train_samples,),dtype='unit8')
+    f = open('imageNet_val/ILSVRC2010_validation_ground_truth.txt','r')
+    dat_y = []
+    # tst = 100
+    # i = 0
+    for lable in f:
+        # i += 1
+        # if i> tst:
+        #     break
+        dat_y.append(lable)
 
-    test_path = os.path.join(path,'test_batch')
-    x_test,y_test = load_batch(test_path)
+    dat_x = []
+    # i = 0
+    for f_n in os.listdir(img_path):
+        # i += 1
+        # if i > tst:
+        #     break
+        img_ = os.path.join(img_path, f_n)
+        img = cv2.imread(img_)
+        dat_x.append(img)
+        pbar.update(1)
 
+    dat_x = np.array(dat_x)
+
+    dat_y = np.array(dat_y)
+    dat_y = dat_y.astype('int32')
+    # X_train, X_test, y_train, y_test = train_test_split(dat,test_size=0.15)
+    return train_test_split(dat_x,dat_y,test_size=0.15)
+
+
+def main():
+    pbar = tqdm(total=50000)
+    for f_n in os.listdir(img_path):
+        resize_images(f_n)
+        pbar.update(1)
+
+if __name__ == '__main__':
+    main()
+
+
+# X_train, X_test, y_train, y_test = load_dat()

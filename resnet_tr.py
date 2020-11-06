@@ -12,7 +12,8 @@ import time
 import json
 
 
-
+torch.set_default_dtype(torch.float32)
+torch.manual_seed(0)
 class Identity(nn.Module):
     expansion = 1
     def __init__(self, inplanes, planes, stride=1,):
@@ -99,6 +100,9 @@ class Resnet_s(nn.Module):
 transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+# transform = transforms.Compose(
+#     [transforms.ToTensor(),
+#      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform)
@@ -114,30 +118,31 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=64,
 classes = ('airplane', 'automobile', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
+epoches = 100
 
 
 def main():
 
     outfile = []
-    f = open('SGD_tr.json',"w", encoding='utf-8')
+    f = open('adam_tr_laptop2.json',"w", encoding='utf-8')
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # print(device)
     model = Resnet_s(Identity, [2, 2, 2, 2]).to(device)
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    # optimizer = optim.Adam(model.parameters())
+    # optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.Adam(model.parameters(),eps=1e-7)
     criterion = nn.CrossEntropyLoss()
 
     val_time = 0
     print('start training Pytorch')
     start_time = time.time()
-    for epoch in range(1,201):
+    for epoch in range(1,epoches + 1):
 
         model.train(True)
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data[0].to(device),data[1].to(device)
-
+            print(inputs.shape)
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -147,7 +152,7 @@ def main():
             loss.backward()
             optimizer.step()
 
-        if epoch % 4 == 0:
+        if True:
 
             val_start_time = time.time()
             print('validating','epoch: ',epoch)
@@ -155,6 +160,7 @@ def main():
             val_info = {}
             losses = 0
             model.train(False)
+            mini_batch_count = 0
             with torch.no_grad():
                 for i, data in enumerate(testloader, 0):
                     inputs, labels = data[0].to(device), data[1].to(device)
@@ -170,9 +176,10 @@ def main():
 
                     # corrects += np.trace(cm)
                     losses += loss
+                    mini_batch_count += 1
 
             val_info['epoch'] = epoch
-            val_info['test loss'] = losses.cpu().numpy().tolist()
+            val_info['test loss'] = losses.cpu().numpy().tolist() / mini_batch_count
             val_info['test accu'] = torch.trace(confusion_mtx).cpu().numpy()/100
             val_info['confusion matrix'] = confusion_mtx.tolist()
             outfile.append(val_info)
