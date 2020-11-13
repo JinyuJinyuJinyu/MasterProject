@@ -139,15 +139,11 @@ f_name = ['adam_VGG16_tf.json','SGD_VGG16_tf.json']
 
 
 
-
 def main(optimizer,fname):
 
     VGG16 = vgg16(1000)
     VGG16.build(input_shape=(None,80,80,3))
 
-    # optimizer = tf.keras.optimizers.Adam(lr=1e-3)
-    # optimizer = tf.compat.v1.train.GradientDescentOptimizer(1e-3,name='GradientDescent')
-    # optimizer = tf.compat.v1.train.MomentumOptimizer(lr=1e-3, momentum=0.9, use_locking=False, name='Momentum', use_nesterov=False)
 
     f = open(fname, "w", encoding='utf-8')
     outfile = []
@@ -168,8 +164,6 @@ def main(optimizer,fname):
     def val_step(x_batch_val, y_batch_val):
 
         val_logits = VGG16(x_batch_val, training=False)
-        # print(val_logits.shape)
-        # val_logits = tf.reshape(val_logits, (x_batch_val.shape[0], 10))
         y_onehot_val = tf.one_hot(y_batch_val, depth=1000)
         loss = tf.keras.losses.categorical_crossentropy(y_onehot_val, val_logits, from_logits=True)
         loss = tf.reduce_sum(loss)
@@ -179,7 +173,6 @@ def main(optimizer,fname):
         preds = tf.cast(preds, dtype=tf.int32)
         mtx = tf.math.confusion_matrix(y_batch_val, preds, num_classes=1000)
 
-        # print(np.array(mtx))
         return loss, mtx
 
     val_time = 0
@@ -189,12 +182,6 @@ def main(optimizer,fname):
         # train
         for step, (x_batch, y_batch) in enumerate(train_set):
             train_step(x_batch, y_batch)
-            # for x_batch_val, y_batch_val in val_set:
-            #     loss, confusion_mtx = val_step(x_batch_val, y_batch_val)
-            #
-            #     confusion_matrix = np.add(confusion_matrix, confusion_mtx)
-            #     lossess += loss.numpy()
-            #     exit()
 
         if True:
             print(epoch)

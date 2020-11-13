@@ -148,8 +148,6 @@ def main(optimizer,fname):
         preds = tf.argmax(prob, axis=1)
         preds = tf.cast(preds, dtype=tf.int32)
         mtx = tf.math.confusion_matrix(y_batch_val, preds, num_classes=10)
-
-        # print(np.array(mtx))
         return loss, mtx
 
 

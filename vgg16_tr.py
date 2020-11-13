@@ -183,7 +183,6 @@ def main(idx):
         for i, data in enumerate(trainset_loader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data[0].to(device), data[1].to(device)
-            # print(inputs.dtype,labels.dtype)
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -206,14 +205,12 @@ def main(idx):
             with torch.no_grad():
                 for i, data in enumerate(testset_loader, 0):
                     inputs, labels = data[0].to(device), data[1].to(device)
-                    # print(inputs.dtype, labels.dtype)
                     outputs = vgg(inputs)
 
                     loss = criterion(outputs, labels)
                     prob = F.softmax(outputs, dim=1)
                     preds = torch.argmax(prob, dim=1)
 
-                    # cm = confusion_matrix(labels.numpy(),preds.numpy())
                     cm = torch_utils.confusion_matrix(preds, labels, num_classes=1000)
                     confusion_mtx = torch.add(confusion_mtx, cm)
 
