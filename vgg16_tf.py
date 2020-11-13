@@ -32,6 +32,7 @@ class Block1(tf.keras.layers.Layer):
 
         x = self.pool(x)
         return x
+
 class Block2(tf.keras.layers.Layer):
     def __init__(self,filters,kernel_size=(3,3), stride=1):
         super(Block2,self).__init__()
@@ -85,7 +86,7 @@ class vgg16(tf.keras.models.Model):
                                             kernel_regularizer=tf.keras.regularizers.l2(5e-4))
 
         self.densec = tf.keras.layers.Dense(units=num_classes,activation='softmax')
-
+    # build block layers
     def _make_layers(self,block,filters,stride=1):
         convlayers = tf.keras.Sequential()
 
@@ -114,10 +115,10 @@ def preprocess(x_batch,y_batch):
 
 
 
-batch_size = 16
-epoches = 1
-# optis = [tf.keras.optimizers.SGD(learning_rate=1e-3)]
-# f_name = ['SGD_VGG16_tf.json']
+batch_size = 32
+epoches = 200
+
+
 x_train, x_test, y_train, y_test = utils.load_dat()
 
 
@@ -127,15 +128,14 @@ x_train, x_test, y_train, y_test = utils.load_dat()
 
 
 train_set = tf.data.Dataset.from_tensor_slices((x_train,y_train))
-train_set = train_set.shuffle(1024).map(preprocess).batch(batch_size)
+train_set = train_set.map(preprocess).batch(batch_size)
 
 
 val_set = tf.data.Dataset.from_tensor_slices((x_test,y_test))
 val_set = val_set.map(preprocess).batch(batch_size)
 
-optis = [tf.keras.optimizers.Adam(lr=1e-3),tf.keras.optimizers.SGD(learning_rate=1e-3,momentum=0.9),
-         tf.compat.v1.train.GradientDescentOptimizer(1e-3,name='GradientDescent')]
-f_name = ['adam_VGG16_tf.json','SGD_VGG16_tf.json','gradient_descent_VGG16_tf.json']
+optis = [tf.keras.optimizers.Adam(lr=1e-3),tf.keras.optimizers.SGD(learning_rate=1e-3,momentum=0.9)]
+f_name = ['adam_VGG16_tf.json','SGD_VGG16_tf.json']
 
 
 
@@ -143,7 +143,7 @@ f_name = ['adam_VGG16_tf.json','SGD_VGG16_tf.json','gradient_descent_VGG16_tf.js
 def main(optimizer,fname):
 
     VGG16 = vgg16(1000)
-    VGG16.build(input_shape=(None,170,170,3))
+    VGG16.build(input_shape=(None,80,80,3))
 
     # optimizer = tf.keras.optimizers.Adam(lr=1e-3)
     # optimizer = tf.compat.v1.train.GradientDescentOptimizer(1e-3,name='GradientDescent')
@@ -197,6 +197,7 @@ def main(optimizer,fname):
             #     exit()
 
         if True:
+            print(epoch)
             val_start_time = time.time()
             val_info = {}
             # print('validating')
@@ -210,8 +211,8 @@ def main(optimizer,fname):
                 lossess += loss.numpy()
 
             val_info['epoch: '] = epoch
-            val_info['test loss'] = lossess / 10000
-            val_info['test acc'] = (tf.linalg.trace(confusion_matrix).numpy() / 100)
+            val_info['loss'] = lossess / 10000
+            val_info['acc'] = (tf.linalg.trace(confusion_matrix).numpy() / 100)
             if epoch % epoches == 0:
                 val_info['confusion matrix'] = confusion_matrix.tolist()
             print('training epoch: ', epoch,'  .accu: ', tf.linalg.trace(confusion_matrix).numpy() / 100)
@@ -225,7 +226,6 @@ def main(optimizer,fname):
     ttl_time['total time'] = (time.time() - start_time)
     ttl_time['val time'] = val_time
     ttl_time['init time'] = init_time
-    ttl_time['ave time'] = (time.time() - start_time - val_time - init_time) / epoches
     outfile.append(ttl_time)
     json.dump(outfile, f, separators=(',', ':'), indent=4)
     f.close()

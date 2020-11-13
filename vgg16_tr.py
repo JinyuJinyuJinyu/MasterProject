@@ -4,16 +4,15 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from torch.utils.data import TensorDataset, DataLoader
-import torch.utils.data as data_utils
-
-import torchvision
-import torchvision.transforms as transforms
 
 import torch_utils
 import utils
 import time
 import json
 
+import warnings
+
+warnings.filterwarnings("ignore", message="You have set 1000 number of classes which is different")
 
 torch.manual_seed(0)
 
@@ -105,6 +104,7 @@ class VGG16(nn.Module):
 
         self.densc = nn.Linear(4096,num_classes)
 
+    # build block layers
     def _make_layers(self, block, dims,stride=1):
         layers = []
         for dim in dims:
@@ -130,12 +130,12 @@ class VGG16(nn.Module):
         x = self.densc(x)
         return x
 
-batch_size = 16
-epoches = 1
+batch_size = 32
+epoches = 200
 
-
+# torch.float32 torch.int64
 x_train, x_test, y_train, y_test = utils.load_dat()
-
+# load data and make data type right
 trains = torch.tensor(x_train)
 trains_label = torch.IntTensor(y_train)
 trains = torch.reshape(trains,(trains.shape[0],trains.shape[3],trains.shape[1],trains.shape[2]))
@@ -144,12 +144,17 @@ tests = torch.tensor(x_test)
 tests_label = torch.IntTensor(y_test)
 tests = torch.reshape(tests,(tests.shape[0],tests.shape[3],tests.shape[1],tests.shape[2]))
 
+trains = trains.type(torch.float32)
+trains_label = trains_label.type(torch.int64)
+tests = tests.type(torch.float32)
+tests_label = tests_label.type(torch.int64)
+
+# print(trains.dtype,trains_label.dtype,tests.dtype,tests_label.dtype)
 trainset = TensorDataset(trains, trains_label)
-trainset_loader = DataLoader(trainset, batch_size, shuffle = True, num_workers=2)
+trainset_loader = DataLoader(trainset, batch_size,num_workers=2)
 
 testset = TensorDataset(tests,tests_label)
-testset_loader = DataLoader(testset, batch_size, shuffle = True, num_workers=2)
-
+testset_loader = DataLoader(testset, batch_size, num_workers=2)
 
 
 
@@ -171,13 +176,14 @@ def main(idx):
     criterion = nn.CrossEntropyLoss()
     val_time = 0
     print('start training Pytorch')
-    start_time = time.time()
+    start_time = init_time = time.time()
     for epoch in range(1, epoches + 1):
 
         vgg.train(True)
         for i, data in enumerate(trainset_loader, 0):
             # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data[0].to(device,dtype=torch.float), data[1].to(device,dtype=torch.long)
+            inputs, labels = data[0].to(device), data[1].to(device)
+            # print(inputs.dtype,labels.dtype)
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -199,7 +205,8 @@ def main(idx):
             vgg.train(False)
             with torch.no_grad():
                 for i, data in enumerate(testset_loader, 0):
-                    inputs, labels = data[0].to(device,dtype=torch.float), data[1].to(device,dtype=torch.long)
+                    inputs, labels = data[0].to(device), data[1].to(device)
+                    # print(inputs.dtype, labels.dtype)
                     outputs = vgg(inputs)
 
                     loss = criterion(outputs, labels)
@@ -215,17 +222,20 @@ def main(idx):
                     mini_batch_count += 1
 
             val_info['epoch'] = epoch
-            val_info['test loss'] = losses.cpu().numpy().tolist() / mini_batch_count
-            val_info['test accu'] = torch.trace(confusion_mtx).cpu().numpy() / 100
+            val_info['loss'] = losses.cpu().numpy().tolist() / mini_batch_count
+            val_info['accu'] = torch.trace(confusion_mtx).cpu().numpy() / 100
             if epoch % epoches == 0:
                 val_info['confusion matrix'] = confusion_mtx.tolist()
             outfile.append(val_info)
             val_time += time.time() - val_start_time
+        if epoch == 1:
+            init_time = time.time() - init_time
 
     ttl_time = {}
     ttl_time['training time'] = (time.time() - start_time - val_time)
     ttl_time['total time'] = (time.time() - start_time)
     ttl_time['val time'] = val_time
+    ttl_time['init time'] = init_time
     outfile.append(ttl_time)
     json.dump(outfile, f, separators=(',', ':'), indent=4)
     f.close()

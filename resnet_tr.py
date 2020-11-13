@@ -14,6 +14,7 @@ import json
 
 torch.set_default_dtype(torch.float32)
 torch.manual_seed(0)
+# resnet Identity block, basic blocks in resnet
 class Identity(nn.Module):
     expansion = 1
     def __init__(self, inplanes, planes, stride=1,):
@@ -65,6 +66,7 @@ class Resnet_s(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512,classes)
 
+    # build blocks from identity block
     def _make_layer(self,block,planes,blocks,stride=1):
 
         strides = [stride] + [1] * (blocks - 1)  # strides=[1,1]
@@ -96,41 +98,45 @@ class Resnet_s(nn.Module):
         return x
 
 
+epoches = 200
+batch_size = 64
 
+# load data
 transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-# transform = transforms.Compose(
-#     [transforms.ToTensor(),
-#      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=transform)
 
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=64,
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                           shuffle=True, num_workers=2)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
-testloader = torch.utils.data.DataLoader(testset, batch_size=64,
+testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                          shuffle=False, num_workers=2)
 
-classes = ('airplane', 'automobile', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+# classes = ('airplane', 'automobile', 'bird', 'cat',
+#            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-epoches = 100
-
-
-def main():
+def main(idx):
 
     outfile = []
-    f = open('adam_tr_laptop2.json',"w", encoding='utf-8')
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # print(device)
     model = Resnet_s(Identity, [2, 2, 2, 2]).to(device)
-    # optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    optimizer = optim.Adam(model.parameters(),eps=1e-7)
+
+    f_names = ['SGD_resnet_tr.json']
+    optis = [optim.SGD(model.parameters(), lr=0.001, momentum=0.9)]
+
+    optimizer = optis[idx]
+    fn = f_names[idx]
+
+    f = open(fn,"w", encoding='utf-8')
+
+
     criterion = nn.CrossEntropyLoss()
 
     val_time = 0
@@ -142,7 +148,7 @@ def main():
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data[0].to(device),data[1].to(device)
-            print(inputs.shape)
+            print(inputs.dtype,labels.dtype)
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -170,28 +176,30 @@ def main():
                     prob = F.softmax(outputs, dim=1)
                     preds = torch.argmax(prob, dim=1)
 
-                    # cm = confusion_matrix(labels.numpy(),preds.numpy())
                     cm = torch_utils.confusion_matrix(preds,labels,num_classes=10)
                     confusion_mtx = torch.add(confusion_mtx,cm)
 
-                    # corrects += np.trace(cm)
                     losses += loss
                     mini_batch_count += 1
 
             val_info['epoch'] = epoch
-            val_info['test loss'] = losses.cpu().numpy().tolist() / mini_batch_count
-            val_info['test accu'] = torch.trace(confusion_mtx).cpu().numpy()/100
+            val_info['loss'] = losses.cpu().numpy().tolist() / mini_batch_count
+            val_info['accu'] = torch.trace(confusion_mtx).cpu().numpy()/100
             val_info['confusion matrix'] = confusion_mtx.tolist()
             outfile.append(val_info)
             val_time += time.time() - val_start_time
+        if epoch == 1:
+            init_time = time.time() - init_time
 
     ttl_time = {}
     ttl_time['training time'] = (time.time() - start_time - val_time)
     ttl_time['total time'] = (time.time() - start_time)
     ttl_time['val time'] = val_time
+    ttl_time['init time'] = init_time
     outfile.append(ttl_time)
     json.dump(outfile, f, separators=(',', ':'), indent=4)
     f.close()
 
 if __name__ == '__main__':
-    main()
+    for i in range(1):
+        main(i)

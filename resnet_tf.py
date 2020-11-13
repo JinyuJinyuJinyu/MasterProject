@@ -1,11 +1,11 @@
 import tensorflow as tf
-from sklearn.model_selection import train_test_split
 import numpy as np
 import json
 import time
 
 tf.keras.backend.set_floatx('float32')
 tf.random.set_seed(0)
+# resnet Identity block, basic blocks in resnet
 class Identity(tf.keras.layers.Layer):
 
     def __init__(self,filters,kernel_size=(3,3), stride=1):
@@ -73,6 +73,7 @@ class Resnet_s(tf.keras.models.Model):
         output = self.fc(x)
 
         return output
+    #build blocks from identity block
     def build_blks(self, filter_num, blocks, stride=1):
         res_blk = tf.keras.Sequential()
         res_blk.add(Identity(filter_num, stride=stride))
@@ -90,14 +91,15 @@ def preprocess(x_batch,y_batch):
 
 
 batch_size = 64
+epoches = 200
 
+# load data
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
 
 y_train = tf.squeeze(y_train,axis=1)
 
-_,x_val,_,y_val = train_test_split(x_test,y_test,test_size=0.2,shuffle=True)
-y_val = tf.squeeze(y_val, axis=1)
-
+# _,x_val,_,y_val = train_test_split(x_test,y_test,test_size=0.2,shuffle=True)
+# y_val = tf.squeeze(y_val, axis=1)
 
 train_set = tf.data.Dataset.from_tensor_slices((x_train,y_train))
 train_set = train_set.shuffle(1024).map(preprocess).batch(batch_size)
@@ -106,8 +108,8 @@ val_set = tf.data.Dataset.from_tensor_slices((x_test,y_test))
 val_set = val_set.map(preprocess).batch(batch_size)
 
 
-optis = [tf.keras.optimizers.Adam(lr=1e-3)]
-f_name = ['testtest.json']
+optis = [tf.keras.optimizers.Adam(lr=1e-3),tf.keras.optimizers.SGD(learning_rate=1e-3,momentum=0.9)]
+f_name = ['adam_resnet_tf.json','SGD_resnet_tf.json']
 
 
 
@@ -117,8 +119,6 @@ def main(optimizer,fname):
     resnet18.build(input_shape=(None,32,32,3))
     # resnet34 = Resnet_s([3,4,6,3])
     optimizer = tf.keras.optimizers.Adam(lr=1e-3)
-    # optimizer = tf.compat.v1.train.GradientDescentOptimizer(1e-3,name='GradientDescent')
-    # optimizer = tf.compat.v1.train.MomentumOptimizer(1e-3, momentum=0.9, use_locking=False, name='Momentum', use_nesterov=False)
 
     f = open(fname, "w", encoding='utf-8')
     outfile = []
@@ -155,16 +155,13 @@ def main(optimizer,fname):
 
     val_time = 0
     print('start training TensorFlow')
-    start_time = time.time()
-    for epoch in range(1,101):
+    start_time = init_time = time.time()
+    for epoch in range(1,epoches + 1):
         print('epoch: ', epoch)
         # train
         # print('training epoch: ',epoch)
         for step, (x_batch, y_batch) in enumerate(train_set):
             train_step(x_batch, y_batch)
-            # for x_batch_val, y_batch_val in val_set:
-            #     loss, confusion_mtx = val_step(x_batch_val, y_batch_val)
-            #     exit()
 
         if True:
             val_start_time = time.time()
@@ -180,16 +177,19 @@ def main(optimizer,fname):
                 lossess += loss.numpy()
 
             val_info['epoch: '] = epoch
-            val_info['test loss'] = lossess / 10000
-            val_info['test acc'] = (tf.linalg.trace(confusion_matrix).numpy() / 10000) * 100
+            val_info['loss'] = lossess / 10000
+            val_info['accu'] = (tf.linalg.trace(confusion_matrix).numpy() / 100)
             val_info['confusion matrix'] = confusion_matrix.tolist()
             outfile.append(val_info)
             val_time += (time.time() - val_start_time)
+        if epoch == 1:
+            init_time = time.time() - init_time
 
     ttl_time = {}
     ttl_time['training time'] = (time.time() - start_time - val_time)
     ttl_time['total time'] = (time.time() - start_time)
     ttl_time['val time'] = val_time
+    ttl_time['init time'] = init_time
     outfile.append(ttl_time)
     json.dump(outfile, f, separators=(',', ':'), indent=4)
     f.close()
