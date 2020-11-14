@@ -5,40 +5,56 @@ from tqdm import tqdm
 import cv2
 import time
 
-image_size = (170,170)
+image_size = (80,80)
+# training images path
 img_path = 'imageNet_val/ILSVRC2010_images_val/val'
-test_path = 'test_imgs/'
+# validation images path
+img_val_path = '/home/jinyu/Downloads/ILSVRC2010_images_test/test'
+
+img2resize_path = ['/home/jinyu/Downloads/ILSVRC2010_images_test/test','imageNet_val/ILSVRC2010_images_val/val']
 
 
-num_train_samples = 42500
-num_val_samples = 7500
 
-def resize_images(img_n):
-    img_ = os.path.join(img_path,img_n)
+
+def resize_images(img_n,i):
+    img_ = os.path.join(img_path[i],img_n)
     img = cv2.imread(img_)
     img = cv2.resize(img, image_size)
-    cv2.imwrite(os.path.join(img_path , img_n),img)
+    cv2.imwrite(os.path.join(img_path[i] , img_n),img)
+
+def subract_one_lable():
+    # in case of some ground truth label is start from 1 not 0, need to convert label start from 0
+    ground_truth_path = 'imageNet_val/test_grond_truth.txt'
+    output_path = 'test_grond_truth_zero.txt'
+
+    f = open(ground_truth_path, 'r')
+    with open(output_path, 'w') as of:
+        for label in f:
+            of.write(str(int(label)-1) + '\n')
+
+
 
 def load_dat():
-    pbar = tqdm(total=50000)
 
+    training_labels = 'imageNet_val/ILSVRC2010_validation_ground_truth.txt'
+    validation_labels = 'test_grond_truth_zero.txt'
 
-    f = open('imageNet_val/ILSVRC2010_validation_ground_truth.txt','r')
-    dat_y = []
-    # tst = 100
-    # i = 0
-    for lable in f:
-        # i += 1
-        # if i> tst:
-        #     break
-        dat_y.append(lable)
+    ttl2load = len(os.listdir(training_labels))
+    ttl2load +=len(os.listdir(validation_labels ))
+    pbar = tqdm(total=ttl2load)
+
+    # training images label path
+    f = open(training_labels,'r')
+    # validation images label path
+    f_val = open(validation_labels,'r')
 
     dat_x = []
-    # i = 0
+    dat_y = []
+
+    for lable in f:
+        dat_y.append(lable)
+
     for f_n in os.listdir(img_path):
-        # i += 1
-        # if i > tst:
-        #     break
         img_ = os.path.join(img_path, f_n)
         img = cv2.imread(img_)
         dat_x.append(img)
@@ -48,18 +64,38 @@ def load_dat():
 
     dat_y = np.array(dat_y)
     dat_y = dat_y.astype('int32')
-    # X_train, X_test, y_train, y_test = train_test_split(dat,test_size=0.15)
-    return train_test_split(dat_x,dat_y,test_size=0.15)
+
+    val_x = []
+    val_y = []
+    for f_n in os.listdir(img_val_path):
+
+        img_ = os.path.join(img_val_path,f_n)
+        img = cv2.imread(img_)
+        val_x.append(img)
+        pbar.update(1)
+
+    for lable in f_val:
+        val_y.append(lable)
+
+    val_x = np.array(val_x)
+
+    val_y = np.array(val_y)
+    val_y = val_y.astype('int32')
+    print('done')
+    return dat_x ,val_x,dat_y ,val_y
 
 
 def main():
-    pbar = tqdm(total=50000)
-    for f_n in os.listdir(img_path):
-        resize_images(f_n)
-        pbar.update(1)
+    ttl2resize = 0
+    for i in range(len(img2resize_path)):
+        ttl2resize += len(os.listdir(img2resize_path[i]))
+
+    pbar = tqdm(total=ttl2resize)
+    for i in range(len(img2resize_path)):
+        for f_n in os.listdir(img2resize_path[i]):
+            resize_images(f_n,i)
+            pbar.update(1)
 
 if __name__ == '__main__':
     main()
-
-
-# X_train, X_test, y_train, y_test = load_dat()
+    # subract_one_lable()

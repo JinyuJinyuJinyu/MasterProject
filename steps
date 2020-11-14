@@ -1,0 +1,13 @@
+didn't implement weight saving and final testset evaluation , only the validation. 
+torch_utils.py is source code form official website for confusion matrix.(https://pytorch-lightning.readthedocs.io/en/latest/_modules/pytorch_lightning/metrics/functional/confusion_matrix.html#confusion_matrix)
+
+For renset_tf.py a d resnet_tr.py: <br /> 
+  Just install packages , cuda and cudnn in reqirement.txt is enough to run.
+
+For vgg16_tf.py and vgg16_tr.py: <br /> 
+  1. download dataset from Image_net(http://www.image-net.org/) and unpack. 
+  2. in this case, if download ILSVRC2010, the labels is start from 1, need to modify it to 0. There is a function in utils.py, def subract_one_lable(), to do that
+  3. resize the raw images,line7-15, using utils.py, add images path to 'img2resize_path' list, config image size, and then run utils.py
+  4. In utils.py, line7-15, image_path is training images path, img_val_path is validation images path. And in function def load_dat():, line 35-80,
+  training_labels and validation_labels are path to traning ground truth and validation ground truth(labels) respectively.
+  5. After above, then vgg16_tf and vgg16tr is ready to run.
