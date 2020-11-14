@@ -35,12 +35,17 @@ def subract_one_lable():
 
 def load_dat():
 
-    pbar = tqdm(total=62000)
+    training_labels = 'imageNet_val/ILSVRC2010_validation_ground_truth.txt'
+    validation_labels = 'test_grond_truth_zero.txt'
+
+    ttl2load = len(os.listdir(training_labels))
+    ttl2load +=len(os.listdir(validation_labels ))
+    pbar = tqdm(total=ttl2load)
 
     # training images label path
-    f = open('imageNet_val/ILSVRC2010_validation_ground_truth.txt','r')
+    f = open(training_labels,'r')
     # validation images label path
-    f_val = open('test_grond_truth_zero.txt','r')
+    f_val = open(validation_labels,'r')
 
     dat_x = []
     dat_y = []
