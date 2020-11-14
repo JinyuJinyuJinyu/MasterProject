@@ -135,7 +135,11 @@ epochs = 200
 
 # torch.float32 torch.int64
 x_train, x_test, y_train, y_test = utils.load_dat()
-# load data and make data type right
+# use it later in calculate accuracy and loss
+number_val_samples = x_test.shape[0]
+
+# load data and make data type right, and reshape data to (N,W,H,C).(number of samples, weight, height, channel).
+# TF is (N,C,W,H)
 trains = torch.tensor(x_train)
 trains_label = torch.IntTensor(y_train)
 trains = torch.reshape(trains,(trains.shape[0],trains.shape[3],trains.shape[1],trains.shape[2]))
@@ -220,13 +224,15 @@ def main(idx):
 
             val_info['epoch'] = epoch
             val_info['loss'] = losses.cpu().numpy().tolist() / mini_batch_count
-            val_info['accu'] = torch.trace(confusion_mtx).cpu().numpy() / 100
+            val_info['accu'] = torch.trace(confusion_mtx.cpu().numpy() / number_val_samples) * 100
             if epoch % epochs == 0:
                 val_info['confusion matrix'] = confusion_mtx.tolist()
             outfile.append(val_info)
             val_time += time.time() - val_start_time
         if epoch == 1:
             init_time = time.time() - init_time
+        print('training epoch: ', epoch, '  .accu: ',
+              torch.trace(confusion_mtx.cpu().numpy() / number_val_samples) * 100)
 
     ttl_time = {}
     ttl_time['training time'] = (time.time() - start_time - val_time)

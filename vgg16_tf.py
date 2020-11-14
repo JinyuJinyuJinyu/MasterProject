@@ -122,8 +122,7 @@ epochs = 200
 x_train, x_test, y_train, y_test = utils.load_dat()
 
 number_samples = y_test.shape[0]
-print(number_samples)
-exit()
+
 # print(x_train.dtype,x_test.dtype,y_train.dtype,y_test.dtype)
 # print(y_train.shape)
 
@@ -143,6 +142,7 @@ f_name = ['adam_VGG16_tf.json','SGD_VGG16_tf.json']
 def main(optimizer,fname):
 
     VGG16 = vgg16(1000)
+    # make sure input shape equal to image size input shape = (None,image_size,image_size,3)
     VGG16.build(input_shape=(None,80,80,3))
 
 
@@ -185,7 +185,7 @@ def main(optimizer,fname):
             train_step(x_batch, y_batch)
 
         if True:
-            print(epoch)
+            print('validating epoch: ',epoch)
             val_start_time = time.time()
             val_info = {}
             # print('validating')
@@ -199,11 +199,12 @@ def main(optimizer,fname):
                 lossess += loss.numpy()
 
             val_info['epoch: '] = epoch
-            val_info['loss'] = lossess / 10000
-            val_info['acc'] = (tf.linalg.trace(confusion_matrix).numpy() / 100)
+            val_info['loss'] = lossess / number_samples
+            val_info['acc'] = (tf.linalg.trace(confusion_matrix).numpy() / number_samples) * 100
             if epoch % epochs == 0:
                 val_info['confusion matrix'] = confusion_matrix.tolist()
-            print('training epoch: ', epoch,'  .accu: ', tf.linalg.trace(confusion_matrix).numpy() / 100)
+            print('training epoch: ', epoch,'  .accu: ',
+                  (tf.linalg.trace(confusion_matrix).numpy() / number_samples) * 100)
             outfile.append(val_info)
             val_time += (time.time() - val_start_time)
         if epoch == 1:

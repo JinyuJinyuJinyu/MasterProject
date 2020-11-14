@@ -39,8 +39,8 @@ def load_dat():
     training_labels = 'imageNet_val/ILSVRC2010_validation_ground_truth.txt'
     validation_labels = 'test_grond_truth_zero.txt'
 
-    ttl2load = len(os.listdir(training_labels))
-    ttl2load +=len(os.listdir(validation_labels ))
+    ttl2load = len(os.listdir(img_path))
+    ttl2load +=len(os.listdir(img_val_path))
     pbar = tqdm(total=ttl2load)
 
     # training images label path
