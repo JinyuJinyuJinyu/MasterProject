@@ -34,7 +34,7 @@ def vis_confusion(confusion):
 
 def vis_accu():
 
-    files = ['gradient_descent_vgg16_tf.json','momentum_vgg16_tf.json','adam_vgg16_tf.json']
+    files = ['adam_VGG16_tf.json','SGD_VGG16_tf.json','adam_VGG16_tr.json','SGD_VGG16_tr.json']
     for jsf in files:
         f = open(jsf,'r',encoding='utf-8')
         data = json.load(f)
@@ -42,26 +42,31 @@ def vis_accu():
         for epoch in data:
             if 'accu' in epoch:
                 accu.append(epoch["accu"])
-
-        plt.plot(np.linspace(1, 201, num=200), accu, label=jsf.split('.')[0])
+        print(accu)
+        plt.plot(np.linspace(1, 201, num=200), accu, label=jsf.split('.')[0],alpha=1)
         print(jsf.split('.')[0])
     plt.legend(loc="upper right")
+    plt.ylim(ymin=0)
     plt.xlabel("epoch")
     plt.ylabel("accuracy")
-    plt.savefig()
-    # plt.show()
+    # plt.savefig()
+    plt.show()
 
 def time_diff():
-    labels = ['TensorFlow', 'PyTorch']
-    times = [82.6,51]
+    labels = ['adam_TF', 'sgd_TF','adam_PyTorch', 'sgd_PyTorch']
+    times = [120.5,117.9,347.19,282.59]
+    init_times = [137.67,133.08,371.44,301.96]
 
     x = np.arange(len(labels))
-    width = 0.4
+
+    width = 0.8
     fig, ax = plt.subplots()
-    plt.title('per epoch time difference(ResNet)(average time)')
-    barlist = ax.bar(labels, times, width)
+    plt.title('init epoch time difference')
+    barlist = ax.bar(labels, init_times, width)
     barlist[0].set_color('#1f77b4')
     barlist[1].set_color('#ff7f0e')
+    barlist[2].set_color('#FFBB33')
+    barlist[3].set_color('#33FF41')
     ax.set_ylabel('time')
 
     ax.set_xticks(x)
@@ -69,5 +74,3 @@ def time_diff():
     ax.set_xlabel('framework')
 
     plt.show()
-
-time_diff()
