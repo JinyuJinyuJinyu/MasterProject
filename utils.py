@@ -23,6 +23,7 @@ def resize_images(img_n,i):
     cv2.imwrite(os.path.join(img_path[i] , img_n),img)
 
 def subract_one_lable():
+    # in case of some ground truth label is start from 1 not 0, need to convert label start from 0
     ground_truth_path = 'imageNet_val/test_grond_truth.txt'
     output_path = 'test_grond_truth_zero.txt'
 
