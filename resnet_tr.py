@@ -98,7 +98,7 @@ class Resnet_s(nn.Module):
         return x
 
 
-epoches = 200
+epochs = 200
 batch_size = 64
 
 # load data
@@ -116,7 +116,6 @@ testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
 testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                          shuffle=False, num_workers=2)
-
 
 def main(idx):
 
@@ -140,7 +139,7 @@ def main(idx):
     val_time = 0
     print('start training Pytorch')
     start_time = time.time()
-    for epoch in range(1,epoches + 1):
+    for epoch in range(1,epochs + 1):
 
         model.train(True)
         for i, data in enumerate(trainloader, 0):

@@ -91,10 +91,12 @@ def preprocess(x_batch,y_batch):
 
 
 batch_size = 64
-epoches = 200
+epochs = 200
 
 # load data
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+# used in later calculate accuracy and loss
+number_val_samples = x_test.shape[0]
 
 y_train = tf.squeeze(y_train,axis=1)
 
@@ -154,7 +156,7 @@ def main(optimizer,fname):
     val_time = 0
     print('start training TensorFlow')
     start_time = init_time = time.time()
-    for epoch in range(1,epoches + 1):
+    for epoch in range(1,epochs + 1):
         print('epoch: ', epoch)
         # train
         # print('training epoch: ',epoch)
@@ -175,8 +177,8 @@ def main(optimizer,fname):
                 lossess += loss.numpy()
 
             val_info['epoch: '] = epoch
-            val_info['loss'] = lossess / 10000
-            val_info['accu'] = (tf.linalg.trace(confusion_matrix).numpy() / 100)
+            val_info['loss'] = lossess / number_val_samples
+            val_info['accu'] = (tf.linalg.trace(confusion_matrix).numpy() / number_val_samples) * 100
             val_info['confusion matrix'] = confusion_matrix.tolist()
             outfile.append(val_info)
             val_time += (time.time() - val_start_time)

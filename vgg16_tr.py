@@ -131,7 +131,7 @@ class VGG16(nn.Module):
         return x
 
 batch_size = 32
-epoches = 200
+epochs = 200
 
 # torch.float32 torch.int64
 x_train, x_test, y_train, y_test = utils.load_dat()
@@ -177,7 +177,7 @@ def main(idx):
     val_time = 0
     print('start training Pytorch')
     start_time = init_time = time.time()
-    for epoch in range(1, epoches + 1):
+    for epoch in range(1, epochs + 1):
 
         vgg.train(True)
         for i, data in enumerate(trainset_loader, 0):
@@ -221,7 +221,7 @@ def main(idx):
             val_info['epoch'] = epoch
             val_info['loss'] = losses.cpu().numpy().tolist() / mini_batch_count
             val_info['accu'] = torch.trace(confusion_mtx).cpu().numpy() / 100
-            if epoch % epoches == 0:
+            if epoch % epochs == 0:
                 val_info['confusion matrix'] = confusion_mtx.tolist()
             outfile.append(val_info)
             val_time += time.time() - val_start_time

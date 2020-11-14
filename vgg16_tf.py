@@ -116,13 +116,14 @@ def preprocess(x_batch,y_batch):
 
 
 batch_size = 32
-epoches = 200
+epochs = 200
 
 
 x_train, x_test, y_train, y_test = utils.load_dat()
 
-
-
+number_samples = y_test.shape[0]
+print(number_samples)
+exit()
 # print(x_train.dtype,x_test.dtype,y_train.dtype,y_test.dtype)
 # print(y_train.shape)
 
@@ -178,7 +179,7 @@ def main(optimizer,fname):
     val_time = 0
     print('start training TensorFlow')
     start_time = init_time = time.time()
-    for epoch in range(1, epoches + 1):
+    for epoch in range(1, epochs + 1):
         # train
         for step, (x_batch, y_batch) in enumerate(train_set):
             train_step(x_batch, y_batch)
@@ -200,7 +201,7 @@ def main(optimizer,fname):
             val_info['epoch: '] = epoch
             val_info['loss'] = lossess / 10000
             val_info['acc'] = (tf.linalg.trace(confusion_matrix).numpy() / 100)
-            if epoch % epoches == 0:
+            if epoch % epochs == 0:
                 val_info['confusion matrix'] = confusion_matrix.tolist()
             print('training epoch: ', epoch,'  .accu: ', tf.linalg.trace(confusion_matrix).numpy() / 100)
             outfile.append(val_info)
