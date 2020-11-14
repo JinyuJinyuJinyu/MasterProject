@@ -1,4 +1,4 @@
-didn't implement weight saving and final evaluation, only the validation. 
+didn't implement weight saving , only the validation. 
 torch_utils.py is source code form official website for confusion matrix.(https://pytorch-lightning.readthedocs.io/en/latest/_modules/pytorch_lightning/metrics/functional/confusion_matrix.html#confusion_matrix)
 
 For renset_tf.py a d resnet_tr.py: <br /> 
