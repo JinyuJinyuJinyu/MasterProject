@@ -11,6 +11,7 @@ classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'hors
 
 
 def vis_confusion(confusion):
+    # parameter takes matrix. plt confusion matrix
     confusion = np.matrix(confusion)
     plt.imshow(confusion, interpolation='nearest', cmap=plt.cm.Blues)
     plt.colorbar()
@@ -33,7 +34,7 @@ def vis_confusion(confusion):
 
 
 def vis_accu():
-
+    # visualize accuracy history
     files = ['adam_VGG16_tf.json','SGD_VGG16_tf.json','adam_VGG16_tr.json','SGD_VGG16_tr.json']
     for jsf in files:
         f = open(jsf,'r',encoding='utf-8')
@@ -42,9 +43,8 @@ def vis_accu():
         for epoch in data:
             if 'accu' in epoch:
                 accu.append(epoch["accu"])
-        print(accu)
+        # config: num=epochs
         plt.plot(np.linspace(1, 201, num=200), accu, label=jsf.split('.')[0],alpha=1)
-        print(jsf.split('.')[0])
     plt.legend(loc="upper right")
     plt.ylim(ymin=0)
     plt.xlabel("epoch")
@@ -53,6 +53,7 @@ def vis_accu():
     plt.show()
 
 def time_diff():
+    # visualize training time difference
     labels = ['adam_TF', 'sgd_TF','adam_PyTorch', 'sgd_PyTorch']
     times = [120.5,117.9,347.19,282.59]
     init_times = [137.67,133.08,371.44,301.96]
