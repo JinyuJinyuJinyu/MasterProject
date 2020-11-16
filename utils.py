@@ -5,19 +5,20 @@ from tqdm import tqdm
 import cv2
 import time
 
-image_size = (80,80)
+image_size = (224,224)
 # training images path
 img_path = 'imageNet_val/ILSVRC2010_images_val/val'
 # validation images path
 img_val_path = '/home/jinyu/Downloads/ILSVRC2010_images_test/test'
 
-img2resize_path = ['/home/jinyu/Downloads/ILSVRC2010_images_test/test','imageNet_val/ILSVRC2010_images_val/val']
+img2resize_path = ['/home/jinyu/Downloads/imageNet_val/ILSVRC2010_images_val/val']
 
 
 
-
-def resize_images(img_n,i):
-    img_ = os.path.join(img_path[i],img_n)
+def resize_images(path,name):
+    img_ = os.path.join(path,name)
+    print(img_)
+    exit()
     img = cv2.imread(img_)
     img = cv2.resize(img, image_size)
     cv2.imwrite(os.path.join(img_path[i] , img_n),img)
@@ -93,7 +94,7 @@ def main():
     pbar = tqdm(total=ttl2resize)
     for i in range(len(img2resize_path)):
         for f_n in os.listdir(img2resize_path[i]):
-            resize_images(f_n,i)
+            resize_images(img2resize_path[i],f_n)
             pbar.update(1)
 
 if __name__ == '__main__':
