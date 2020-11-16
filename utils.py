@@ -21,7 +21,7 @@ def resize_images(path,name):
     exit()
     img = cv2.imread(img_)
     img = cv2.resize(img, image_size)
-    cv2.imwrite(os.path.join(img_path[i] , img_n),img)
+    cv2.imwrite(os.path.join(path , name),img)
 
 def subract_one_lable():
     # in case of some ground truth label is start from 1 not 0, need to convert label start from 0
