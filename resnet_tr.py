@@ -125,8 +125,8 @@ def main(idx):
     # print(device)
     model = Resnet_s(Identity, [2, 2, 2, 2]).to(device)
 
-    f_names = ['SGD_resnet_tr.json']
-    optis = [optim.SGD(model.parameters(), lr=0.001, momentum=0.9)]
+    f_names = ['SGD_resnet_tr.json','adam_resnet_tr.json']
+    optis = [optim.SGD(model.parameters(), lr=0.001, momentum=0.9),optim.Adam(model.parameters(),eps=1e-7)]
 
     optimizer = optis[idx]
     fn = f_names[idx]
@@ -198,5 +198,5 @@ def main(idx):
     f.close()
 
 if __name__ == '__main__':
-    for i in range(1):
+    for i in range(2):
         main(i)

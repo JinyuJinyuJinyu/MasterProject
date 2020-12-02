@@ -200,7 +200,7 @@ def main(optimizer,fname):
 
             val_info['epoch: '] = epoch
             val_info['loss'] = lossess / number_samples
-            val_info['acc'] = (tf.linalg.trace(confusion_matrix).numpy() / number_samples) * 100
+            val_info['accu'] = (tf.linalg.trace(confusion_matrix).numpy() / number_samples) * 100
             if epoch % epochs == 0:
                 val_info['confusion matrix'] = confusion_matrix.tolist()
             print('training epoch: ', epoch,'  .accu: ',
